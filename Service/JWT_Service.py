@@ -10,20 +10,41 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
+REFRESH_TOKEN_EXPIRE_DAYS = os.getenv("REFRESH_TOKEN_EXPIRE_DAYS")
 
 
-#-----Tạo JWT-------#
-def create_access_token(data: dict, expires_delta: timedelta | None ) -> str:
+#-----Tạo access token-------#
+def create_access_token(data: dict, expires_delta: timedelta | None = None ) -> str:
     to_endcode = data.copy()
     expires = datetime.utcnow() + (expires_delta or timedelta(minutes=int(ACCESS_TOKEN_EXPIRE_MINUTES)))
-    to_endcode.update({"exp": expires})
+    to_endcode.update({"exp": expires, "type": "access"})   
+    encoded_jwt = jwt.encode(to_endcode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+#------Tạo refresh token-------#
+def create_refresh_token(data: dict, expires_delta: timedelta | None = None) -> str:
+    to_endcode = data.copy()
+    expires = datetime.utcnow() + (expires_delta or timedelta(days=int(REFRESH_TOKEN_EXPIRE_DAYS)))
+    to_endcode.update({"exp": expires, "type": "refresh"})
     encoded_jwt = jwt.encode(to_endcode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
 #------Giải mã JWT-------#
-def verify_token(token: str) -> dict:
+def verify_access_token(token: str) -> dict:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        if payload.get("type") != "access":
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail = "Invalid token type")
         return payload
     except JWTError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail = "Invalid or expired token")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail = "Invalid or expired access token")
+    
+#------Giải mã Refresh JWT-------#
+def verify_refresh_token(token: str) -> dict:
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        if payload.get("type") != "refresh":
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail = "Invalid token type")
+        return payload
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail = "Invalid or expired refresh token")
