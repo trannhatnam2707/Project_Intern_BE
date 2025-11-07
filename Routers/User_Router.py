@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -16,8 +17,8 @@ from Utils.Dependencies import get_current_user  # check JWT
 from Models.Users_Model import Users
 
 router = APIRouter(
-    prefix="/api/users",
-    tags=["Users"],
+    prefix="/api",
+    tags=["Users và Auth"],
 )
 
 # ---------- Auth ----------
@@ -26,9 +27,14 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     return register_user(db, user)
 
 
-@router.post("/login")
-def login(user: UserLogin, db: Session = Depends(get_db)):
-    return login_user(db, user)
+@router.post("/auth/login", tags=["Auth"])
+def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    """API login chung cho cả user và admin
+        Swagger sẽ dùng route này để authorize """
+    
+    #chuyển Oauth2 form về schema tương thích
+    user_data = type("UserLogin", (), {"Email": form_data.username, "Password": form_data.password})
+    return login_user(db, user_data)
 
 
 @router.post("/refresh")

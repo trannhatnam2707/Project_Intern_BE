@@ -6,11 +6,7 @@ from Service.JWT_Service import verify_access_token
 from Database.Connection import SessionLocal
 
 #------Dependency để lấy token cho user-------#
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/users/login")
-
-
-# #------Dependency để lấy token cho user-------#
-oauth2_scheme_admin = OAuth2PasswordBearer(tokenUrl="api/admin/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 #------Dependency để lấy db-------#
 def get_db():
@@ -34,7 +30,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db=Depends(get_db)):
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token không hợp lệ hoặc đã hết hạn")
 
-def require_admin(token: str = Depends(oauth2_scheme_admin), db=Depends(get_db)):
+def require_admin(token: str = Depends(oauth2_scheme), db=Depends(get_db)):
     try:
         payload = verify_access_token(token)
         email = payload.get("sub")
