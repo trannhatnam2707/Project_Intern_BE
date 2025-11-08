@@ -15,4 +15,4 @@ class Payment(Base):
     PaymentDate = Column(DateTime, default=datetime.utcnow)
     StripeSessionID = Column(String(255))
     
-    order = relationship("Orders", back_populates="payments")
+    order = relationship("Order", back_populates="payments")
