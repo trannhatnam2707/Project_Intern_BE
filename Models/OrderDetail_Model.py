@@ -12,6 +12,6 @@ class OrderDetail(Base):
     ProductID = Column(Integer, ForeignKey("Products.ProductID"), nullable=False)
     Quantity = Column(Integer, nullable=False)
     UnitPrice = Column(Numeric(10, 2), nullable=False)
-    
-    order = relationship("Orders", back_populates="order_details")
-    product = relationship("Products", back_populates="order_items")
+  
+    order = relationship("Order", back_populates="order_details")
+    product = relationship("Product", back_populates="order_items")
