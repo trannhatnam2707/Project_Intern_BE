@@ -1,9 +1,8 @@
-
+# Models/Product_Model.py
 from datetime import datetime
+from sqlalchemy import Column, Integer, String, Numeric, Text, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from Database.Connection import Base
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, Numeric, String, Text
-
 
 class Product(Base):
     __tablename__ = "Products"
@@ -17,5 +16,6 @@ class Product(Base):
     Stock = Column(Integer, default=0)
     CreatedAt = Column(DateTime, default=datetime.utcnow)
 
-    category = relationship("Categories", back_populates="products")
-    order_items = relationship("OrdersDetails", back_populates="product")
+    category = relationship("Category", back_populates="products")
+
+    order_items = relationship("OrdersDetails", back_populates="product", cascade="all, delete-orphan")
