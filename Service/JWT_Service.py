@@ -18,7 +18,6 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None ) -> 
     to_endcode = data.copy()
     expires = datetime.utcnow() + (expires_delta or timedelta(minutes=int(ACCESS_TOKEN_EXPIRE_MINUTES)))
     
-    x
     if "type" not in to_endcode:
         to_endcode.update({"type": "access"})
         
