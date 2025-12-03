@@ -6,12 +6,12 @@ from Schemas.Products_Schemas import ProductCreate
 # Create product
 def create_product(db: Session, product_data: ProductCreate):
     new_product = Product(
-        CategoryID = product_data.CategoryID,
-        ProductName = product_data.ProductName,
-        Price = product_data.Price, 
-        Decription = product_data.Description,  
-        Image = product_data.ImageURL,  
-        Stock = product_data.Stock,
+        CategoryID=product_data.CategoryID,
+        ProductName=product_data.ProductName,
+        Price=product_data.Price,
+        Description=product_data.Description,
+        ImageURL=product_data.ImageURL,
+        Stock=product_data.Stock,
     )
     db.add(new_product)
     db.commit()

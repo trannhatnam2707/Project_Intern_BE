@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import List
 from pydantic import BaseModel
 
-#-------Chi tiết đơn hà ng--------#
+#-------Chi tiết đơn hàng--------#
 
 class OrderDetailItem(BaseModel):
     productID: int

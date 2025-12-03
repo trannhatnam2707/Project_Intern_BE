@@ -12,7 +12,7 @@ class Product(Base):
     ProductName = Column(String(250), nullable=False)
     Price = Column(Numeric(10, 2), nullable=False)
     Description = Column(Text)
-    Image = Column(String(250))
+    ImageURL = Column(String(250))
     Stock = Column(Integer, default=0)
     CreatedAt = Column(DateTime, default=datetime.utcnow)
 
