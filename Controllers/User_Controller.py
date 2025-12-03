@@ -1,9 +1,12 @@
-from fastapi import HTTPException, status
+from datetime import timedelta
+from turtle import reset
+from fastapi import BackgroundTasks, HTTPException, status
 from sqlalchemy.orm import Session
 from Models.Users_Model import Users
-from Schemas.User_Schemas import UserCreate, UserLogin, UserUpdate, ChangePassword
+from Schemas.User_Schemas import ResetPasswordConfirm, UserCreate, UserLogin, UserUpdate, ChangePassword
 from Service.Auth_Service import  hash_password, verify_password
-from Service.JWT_Service import create_access_token, create_refresh_token, verify_refresh_token
+from Service.Email_Service import send_reset_password_email
+from Service.JWT_Service import create_access_token, create_refresh_token, verify_refresh_token, verify_reset_token
 import os
 from dotenv import load_dotenv  
 
@@ -166,3 +169,40 @@ def refresh_access_token(refresh_token: str):
     new_access_token = create_access_token({"sub": email})
     return {"access_token": new_access_token, "token_type": "bearer"}
 
+#-------Quên mật khẩu (Gửi mail)-------#
+async def forgot_password(db: Session, email: str, background_tasks: BackgroundTasks):
+    # 1. Kiểm tra email có tồn tại không
+    user = db.query(Users).filter(Users.Email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Email không tồn tại trong hệ thống")
+
+    # 2. Tạo Token reset (hết hạn sau 15 phút)
+    # Token này chứa email của user để lát nữa xác thực
+    reset_token = create_access_token(
+        data={"sub": user.Email, "type": "reset"}, 
+        expires_delta=timedelta(minutes=15)
+    )
+
+    # 3. Gửi email (Dùng BackgroundTasks để API không bị đơ khi đang gửi mail)
+    background_tasks.add_task(send_reset_password_email, user.Email, reset_token)
+
+    return {"message": "Đã gửi hướng dẫn khôi phục mật khẩu. Vui lòng kiểm tra email!"}
+
+def confirm_reset_password(db: Session, data: ResetPasswordConfirm):
+    # 1. Xác thực token
+    payload = verify_reset_token(data.token)
+    email = payload.get("sub")
+     
+    if not email:
+        raise HTTPException(status_code=400, detail="Reset Token không hợp lệ")
+    
+    # 2. Tìm user theo email
+    user = db.query(Users).filter(Users.Email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Người dùng không tồn tại")
+    
+    # 3. Cập nhật mật khẩu mới
+    user.Password = hash_password(data.new_password)
+    db.commit()
+    
+    return {"message": "Đặt lại mật khẩu thành công"}

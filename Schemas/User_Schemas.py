@@ -26,6 +26,11 @@ class ChangePassword(BaseModel):
     OldPassword: str
     NewPassword: str
 
+#---------Reset Password Request----------#    
+class ResetPasswordConfirm(BaseModel):
+    token: str
+    new_password: str
+
 #---------Response----------#
 class UserOut(BaseModel):
     UserID: int
