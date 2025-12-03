@@ -21,7 +21,7 @@ class ProductOut(BaseModel):
     ImageURL: Optional[str] = None
     Stock: int
     CategoryID: Optional[int] 
-    CreateAt: datetime
+    CreatedAt: datetime
 
     class Config:
         from_attributes = True
