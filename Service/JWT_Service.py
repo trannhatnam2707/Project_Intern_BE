@@ -17,7 +17,13 @@ REFRESH_TOKEN_EXPIRE_DAYS = os.getenv("REFRESH_TOKEN_EXPIRE_DAYS")
 def create_access_token(data: dict, expires_delta: timedelta | None = None ) -> str:
     to_endcode = data.copy()
     expires = datetime.utcnow() + (expires_delta or timedelta(minutes=int(ACCESS_TOKEN_EXPIRE_MINUTES)))
-    to_endcode.update({"exp": expires, "type": "access"})   
+    
+    x
+    if "type" not in to_endcode:
+        to_endcode.update({"type": "access"})
+        
+    to_endcode.update({"exp": expires})
+    
     encoded_jwt = jwt.encode(to_endcode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
@@ -48,3 +54,13 @@ def verify_refresh_token(token: str) -> dict:
         return payload
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail = "Invalid or expired refresh token")
+    
+def verify_reset_token(token:  str) -> dict:
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        # Kiểm tra đúng là token loại "reset" không
+        if payload.get("type") != "reset":
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail = "Invalid token type")
+        return payload
+    except JWTError:    
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail = "Invalid or expired reset token")

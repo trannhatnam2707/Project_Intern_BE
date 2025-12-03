@@ -1,12 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2, OAuth2PasswordRequestForm
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from typing import List
 
 from Controllers.User_Controller import (
     create_admin,
     delete_all_users,
     delete_user,
+    forgot_password,
     get_all_users,
     register_user,
     login_user,
@@ -15,10 +16,11 @@ from Controllers.User_Controller import (
     change_password,
     refresh_access_token,
     get_user_by_id,
-    update_user_role
+    update_user_role,
+    confirm_reset_password
 )
 from Schemas.Admin_Schemas import AdminCreate
-from Schemas.User_Schemas import UserCreate, UserLogin, UserUpdate, ChangePassword
+from Schemas.User_Schemas import UserCreate, UserLogin, UserUpdate, ChangePassword, ResetPasswordConfirm
 from Database.Connection import get_db
 from Utils.Dependencies import get_current_user, require_admin  # check JWT
 from Models.Users_Model import Users
@@ -102,5 +104,15 @@ def change_my_password(
 ):
     return change_password(db, current_user, data)
 
+# API quên mật khẩu
+@router.post("/forgot-password")
+async def forgot_password_router(
+    email: str,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    return await forgot_password(db, email, background_tasks)
 
-
+@router.post("/reset-password")
+def reset_password_route(data: ResetPasswordConfirm, db: Session = Depends(get_db)):
+    return confirm_reset_password(db, data)
