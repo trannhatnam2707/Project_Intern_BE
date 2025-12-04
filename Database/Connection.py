@@ -20,13 +20,6 @@ engine = create_engine(
     }
 )
 
-# ⚙️ Fix quan trọng: ép dùng NVARCHAR để lưu Unicode
-@event.listens_for(Engine, "before_cursor_execute")
-def receive_before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
-    if isinstance(statement, str):
-        statement = statement.replace("VARCHAR", "NVARCHAR")
-    return statement, parameters
-
 # Tạo session (kết nối logic để thao tác CRUD)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
