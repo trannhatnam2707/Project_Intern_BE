@@ -5,12 +5,20 @@ from sqlalchemy.engine import Engine
 
 #kết nối SQL server
 DATABASE_URL = (
-    "mssql+pyodbc://LAPTOP-9TFF98TE/EcommerceAI?"
-    "driver=ODBC+Driver+17+for+SQL+Server&trusted_connection=yes&UseFMTOnly=No"
+    "mssql+pyodbc://LAPTOP-9TFF98TE/EcommerceAI"
+    "?driver=ODBC+Driver+17+for+SQL+Server"
+    "&trusted_connection=yes"
+    "&charset=utf8"
 )
 
 # Tạo engine kết nối đến cơ sở dữ liệu
-engine = create_engine(DATABASE_URL + "&MARS_Connection=Yes", connect_args={"autocommit": True, "unicode_results": True})
+engine = create_engine(
+    DATABASE_URL,
+    fast_executemany=True,
+    connect_args={
+        "unicode_results": True,
+    }
+)
 
 # ⚙️ Fix quan trọng: ép dùng NVARCHAR để lưu Unicode
 @event.listens_for(Engine, "before_cursor_execute")

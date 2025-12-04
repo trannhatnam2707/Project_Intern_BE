@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, Numeric, String
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, Numeric, Unicode
 from Database.Connection import Base
 from sqlalchemy.orm import relationship
 
@@ -11,7 +11,7 @@ class Order(Base):
     UserID = Column(Integer, ForeignKey("Users.UserID"), nullable=False)
     OrderDate = Column(DateTime, default=datetime.utcnow)
     TotalAmount = Column(Numeric(10, 2), nullable=False)
-    Status = Column(String(20), default="Pending")
+    Status = Column(Unicode(20), default="Pending")
     
     
     user = relationship("Users", back_populates="orders")

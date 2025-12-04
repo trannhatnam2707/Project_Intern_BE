@@ -3,6 +3,14 @@ from sqlalchemy.orm import Session
 from Models.Products_Model import Product
 from Schemas.Products_Schemas import ProductCreate
 
+
+# --- Hàm giả lập gọi AI (Sau này bạn sẽ thay bằng gọi Gemini thật) ---
+def generate_marketing_content_by_ai(product_name: str, description: str):
+    # TODO: Sau này code gọi Gemini API sẽ nằm ở đây
+    # prompt = f"Viết một câu marketing hấp dẫn cho sản phẩm {product_name} có đặc điểm {description}"
+    # return gemini.generate(prompt)
+    return f"🔥 SIÊU PHẨM {product_name} - {description} - MUA NGAY KẺO LỠ!"
+    
 # Create product
 def create_product(db: Session, product_data: ProductCreate):
     new_product = Product(

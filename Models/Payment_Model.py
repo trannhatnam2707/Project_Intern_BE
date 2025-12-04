@@ -1,5 +1,5 @@
 from Database.Connection import Base
-from sqlalchemy import Column, ForeignKey, Integer, Numeric, String, DateTime
+from sqlalchemy import Column, ForeignKey, Integer, Numeric, Unicode, DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
@@ -10,9 +10,9 @@ class Payment(Base):
     PaymentID = Column(Integer, primary_key=True, index=True)
     OrderID = Column(Integer, ForeignKey("Orders.OrderID", ondelete="CASCADE"), nullable=False)
     Amount = Column(Numeric(10, 2), nullable=False)
-    PaymentMethod = Column(String(50), nullable="Stripe")
-    PaymentStatus = Column(String(20), default="Success")
+    PaymentMethod = Column(Unicode(50), nullable="Stripe")
+    PaymentStatus = Column(Unicode(20), default="Success")
     PaymentDate = Column(DateTime, default=datetime.utcnow)
-    StripeSessionID = Column(String(255))
+    StripeSessionID = Column(Unicode(255))
     
     order = relationship("Order", back_populates="payments")

@@ -9,6 +9,7 @@ class ProductCreate(BaseModel):
     ProductName: str
     Price: Decimal
     Description: Optional[str] = None
+    MarketingContent: Optional[str] = None
     ImageURL: Optional[str] = None
     Stock: Optional[int] = 0
     
