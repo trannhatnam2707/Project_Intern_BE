@@ -30,14 +30,24 @@ def create_checkout_session(db: Session, order_id: int):
     for detail in order_details:
         product = db.query(Product).filter(Product.ProductID == detail.ProductID).first()
         
+        # 👇 XỬ LÝ ẢNH THÔNG MINH
+        image_list = []
+        if product.ImageURL:
+            # Nếu trong DB đã là link online (https://...) -> Gửi luôn cho Stripe
+            if product.ImageURL.startswith("http"):
+                image_list = [product.ImageURL]
+            # Nếu vẫn là link localhost cũ -> Gửi ảnh giữ chỗ (để không bị lỗi Stripe)
+            else:
+                image_list = ["https://img.freepik.com/free-vector/smart-watch-realistic-image-black_1284-11873.jpg"]
+
         line_items.append({
             'price_data': {
                 'currency': 'vnd',
                 'product_data': {
                     'name': product.ProductName,
-                    'images': [], # Để rỗng để tránh lỗi ảnh localhost
+                    'images': image_list, # 👈 Gửi list ảnh đã xử lý
                 },
-                'unit_amount': int(detail.UnitPrice), 
+                'unit_amount': int(detail.UnitPrice),
             },
             'quantity': detail.Quantity,
         })
