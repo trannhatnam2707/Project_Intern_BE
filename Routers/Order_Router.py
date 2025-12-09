@@ -23,7 +23,7 @@ def create_new_order(
     db: Session = Depends(get_db), 
     current_user=Depends(get_current_user)
 ):
-    return create_order(db, current_user.UserID, order_data.items)
+    return create_order(db, current_user.UserID, order_data)
 
 # User: Xem đơn hàng của chính mình
 # Thêm response_model để format dữ liệu đầu ra chuẩn đẹp

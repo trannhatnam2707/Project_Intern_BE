@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship
 
 
 class OrderDetail(Base):
-    __tablename__ = "OrdersDetails"
+    __tablename__ = "OrderDetails"
     
     OrderDetailID = Column(Integer, primary_key=True, index=True)
     OrderID = Column(Integer, ForeignKey("Orders.OrderID", ondelete="CASCADE"), nullable=False)
