@@ -20,7 +20,8 @@ class UserLogin(BaseModel):
 #-----Update User-------#
 class UserUpdate(BaseModel):
     FullName: Optional[str] = None
-    Password: Optional[str] = None
+    PhoneNumber: Optional[str] = None
+    Address: Optional[str] = None
     
 class ChangePassword(BaseModel):
     OldPassword: str
@@ -38,6 +39,8 @@ class UserOut(BaseModel):
     Email: EmailStr 
     Role: str
     CreatedAt: datetime
+    PhoneNumber: Optional[str] = None
+    Address: Optional[str] = None
 
     class Config:
         from_attributes = True

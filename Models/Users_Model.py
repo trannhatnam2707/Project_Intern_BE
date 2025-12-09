@@ -11,6 +11,8 @@ class Users(Base):
     FullName = Column(Unicode(100), nullable=False)
     Email = Column(Unicode(100), unique=True, nullable=False)
     Password = Column(Unicode(255), nullable=False)
+    PhoneNumber = Column(Unicode(20), nullable=True)
+    Address = Column(Unicode(500), nullable=True)
     Role = Column(Unicode(50), nullable=False, default="user")
     CreatedAt = Column(DateTime, default=datetime.utcnow)
     

@@ -15,6 +15,7 @@ class Product(Base):
     MarketingContent = Column(UnicodeText, nullable=True) # Nội dung marketing (sau này AI sinh)
     ImageURL = Column(Unicode(250))
     Stock = Column(Integer, default=0)
+    Sold = Column(Integer, default=0)
     CreatedAt = Column(DateTime, default=datetime.utcnow)
 
     category = relationship("Category", back_populates="products")

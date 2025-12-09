@@ -131,6 +131,8 @@ def get_me(db: Session, current_user: Users):
         "FullName": current_user.FullName,
         "Email": current_user.Email,
         "Role": current_user.Role,
+        "PhoneNumber": current_user.PhoneNumber,
+        "Address": current_user.Address,
         "CreatedAt": current_user.CreatedAt
     }
 
@@ -140,7 +142,14 @@ def update_profile(db: Session, current_user: Users, update_data: UserUpdate):
     if not db_user:
         raise HTTPException(status_code=404, detail="Người dùng không tồn tại")
     
-    db_user.FullName = update_data.FullName or db_user.FullName
+    # 👇 CẬP NHẬT DỮ LIỆU NẾU CÓ GỬI LÊN
+    if update_data.FullName:
+        db_user.FullName = update_data.FullName
+    if update_data.PhoneNumber:
+        db_user.PhoneNumber = update_data.PhoneNumber
+    if update_data.Address:
+        db_user.Address = update_data.Address
+        
     db.commit()
     db.refresh(db_user) 
     return {"message": "Cập nhật thông tin thành công"}
