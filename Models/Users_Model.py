@@ -18,3 +18,4 @@ class Users(Base):
     
     advice_history = relationship("AdviceHistory", back_populates="user", cascade="all, delete")
     orders = relationship("Order", back_populates="user", cascade="all, delete")
+    reviews = relationship("Reviews", back_populates="user", cascade="all, delete")

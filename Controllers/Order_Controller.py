@@ -2,32 +2,58 @@ from http.client import HTTPException
 from Models.OrderDetail_Model import OrderDetail
 from Models.Order_Model import Order
 from Models.Products_Model import Product
+from Schemas.Order_Schemas import OrderCreate
 from sqlalchemy.orm import Session
 
 #------tạo đơn hàng mới------#
-def create_order(db: Session, user_id: int, items: list):
-    total = 0 
-    order_details = []
+def create_order(db: Session, user_id: int, order_data: OrderCreate):
+    total_amount = 0
+    new_order_details = []
     
-    for item in items:
-        product = db.query(Product).filter(Product.ProductID == item['product_id']).first()
-        if not product:
-            raise HTTPException(status_code=404, detail=f"Sản phẩm với ID {item['product_id']} không tồn tại")
-        if product.Stock < item['quantity']:
-            raise HTTPException(status_code=400, detail=f"Sản phẩm {product.ProductName} không đủ số lượng trong kho")        
-
-
-        total += product.Price * item['quantity']
-        order_details.append(
-            OrderDetail(ProductID=product.ProductID, Quantity=item['quantity'], UnitPrice=product.Price)
-        )
-        product.Stock -= item['quantity']  # Cập nhật tồn kho
+    for item in order_data.items:
+        product = db.query(Product).filter(Product.ProductID == item.product_id).first()
         
-    new_order = Order(UserID=user_id, TotalAmount=total, order_details=order_details)
+        if not product:
+            raise HTTPException(status_code=404, detail=f"Sản phẩm ID {item.product_id} không tồn tại")
+        
+        if product.Stock < item.quantity:
+            raise HTTPException(status_code=400, detail=f"Sản phẩm '{product.ProductName}' không đủ hàng (Còn: {product.Stock})")
+        
+        # Tính tiền: Giá DB * Số lượng
+        price = product.Price
+        line_total = price * item.quantity
+        total_amount += line_total
+          
+        # Trừ tồn kho
+        product.Stock -= item.quantity
+        
+        # Tạo đối tượng chi tiết (chưa lưu)
+        new_detail = OrderDetail(
+            ProductID=product.ProductID,
+            Quantity=item.quantity,
+            UnitPrice=price
+        )
+        new_order_details.append(new_detail)
+
+    # 2. Tạo đơn hàng chính (Master)
+    new_order = Order(
+        UserID=user_id,          # Lấy từ Token
+        TotalAmount=total_amount, # Tính toán ở trên
+        Status="Pending"
+    )
+    
     db.add(new_order)
-    db.commit() 
+    db.flush() # Để lấy được new_order.OrderID ngay lập tức
+
+    # 3. Lưu các chi tiết đơn hàng
+    for detail in new_order_details:
+        detail.OrderID = new_order.OrderID
+        db.add(detail)
+    
+    db.commit()
     db.refresh(new_order)
-    return {"message": "Đơn hàng đã được tạo thành công", "order_id": new_order.OrderID}
+    
+    return {"message": "Tạo đơn hàng thành công", "order_id": new_order.OrderID}
 
 #------User xem đơn hàng------#
 def get_my_orders(db: Session, user_id: int):

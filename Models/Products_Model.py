@@ -18,5 +18,5 @@ class Product(Base):
     CreatedAt = Column(DateTime, default=datetime.utcnow)
 
     category = relationship("Category", back_populates="products")
-
+    reviews = relationship("Reviews", back_populates="product", cascade="all, delete-orphan")
     order_items = relationship("OrderDetail", back_populates="product", cascade="all, delete-orphan")
