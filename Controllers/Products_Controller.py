@@ -4,15 +4,54 @@ from sqlalchemy import desc, or_ # Import thêm or_
 from Models.Products_Model import Product
 from Models.Categories_Model import Category # Import thêm Category
 from Schemas.Products_Schemas import ProductCreate
+import google.generativeai as genai
+import os
+from dotenv import load_dotenv
 
 
-# --- Hàm giả lập gọi AI (Sau này bạn sẽ thay bằng gọi Gemini thật) ---
+load_dotenv()
+
+GENAI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+if GENAI_API_KEY:
+    genai.configure(api_key=GENAI_API_KEY)
+
 def generate_marketing_content_by_ai(product_name: str, description: str):
-    # TODO: Sau này code gọi Gemini API sẽ nằm ở đây
-    # prompt = f"Viết một câu marketing hấp dẫn cho sản phẩm {product_name} có đặc điểm {description}"
-    # return gemini.generate(prompt)
-    return f"🔥 SIÊU PHẨM {product_name} - {description} - MUA NGAY KẺO LỠ!"
+    if not GENAI_API_KEY:
+        return "Chưa cấu hình GEMINI_API_KEY trong Backend!"
     
+    try:
+        model = genai.GenerativeModel('gemini-2.5-flash') # Hoặc gemini-1.5-flash
+        
+        prompt = f"""
+        Bạn là chuyên gia marketing trong lĩnh vực công nghệ. 
+Hãy tạo nội dung quảng cáo ngắn gọn và hấp dẫn cho một sản phẩm điện tử.
+
+🎯 **Yêu cầu nội dung:**
+- Viết bằng tiếng Việt.
+- Độ dài: 4–5 câu.
+- Giọng văn: sinh động, thu hút, mang cảm giác chuyên nghiệp.
+- Có sử dụng emoji nhưng không lạm dụng (2–4 emoji).
+- Nhấn mạnh lợi ích, trải nghiệm người dùng và điểm nổi bật của sản phẩm.
+- Cuối đoạn có lời kêu gọi hành động (CTA) nhẹ nhàng.
+- Không được tự bịa đặt thông số kỹ thuật không có trong dữ liệu đầu vào.
+- Mỗi sản phẩm là câu marketing phải khác nhau
+- Chỉ cần gen ra đoạn marketing thôi, không cần phải "chào bạn, tôi sẽ tạo ,..." .
+
+
+📦 **Thông tin sản phẩm:**
+- Tên sản phẩm: {product_name}
+- Mô tả / Đặc điểm nổi bật: {description if description else "Sản phẩm công nghệ đời mới với nhiều tính năng hiện đại."}
+
+Hãy viết nội dung sao cho phù hợp quảng cáo Facebook hoặc website bán hàng.
+        """
+        
+        response = model.generate_content(prompt)
+        return response.text.strip()
+    except Exception as e:
+        return f"Lỗi AI: {str(e)}"
+
+
 # Create product
 def create_product(db: Session, product_data: ProductCreate):
     new_product = Product(
@@ -20,13 +59,14 @@ def create_product(db: Session, product_data: ProductCreate):
         ProductName=product_data.ProductName,
         Price=product_data.Price,
         Description=product_data.Description,
+        MarketingContent=product_data.MarketingContent, 
         ImageURL=product_data.ImageURL,
         Stock=product_data.Stock,
     )
     db.add(new_product)
     db.commit()
     db.refresh(new_product)
-    return {"message": "Tạo sản phẩm thành công", "product": new_product}    
+    return new_product
 
 # Get all products
 def get_all_products(db: Session, category_id: int = None, sort_by: str = None, page: int = 1, limit: int = 12, search: str = None):
@@ -90,7 +130,7 @@ def update_product(db: Session, product_id: int, data: ProductCreate):
             setattr(product, key, value)
     db.commit()
     db.refresh(product) 
-    return {"message": "Cập nhật sản phẩm thành công", "product": product}
+    return product
 
 # Delete product
 def delete_product(db: Session, product_id: int):   

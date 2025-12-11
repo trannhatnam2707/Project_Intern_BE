@@ -9,6 +9,7 @@ from Service.Email_Service import send_reset_password_email
 from Service.JWT_Service import create_access_token, create_refresh_token, verify_refresh_token, verify_reset_token
 import os
 from dotenv import load_dotenv  
+from sqlalchemy import or_, desc
 
 load_dotenv()
 ADMIN_SETUP_KEY = os.getenv("ADMIN_SETUP_KEY")  
@@ -81,9 +82,36 @@ def create_admin(db:Session, full_name: str, email: str, password: str, setup_ke
     return {"message": "Admin account created successfully", "email": new_admin.Email, "role": new_admin.Role}
 
 # ------------------- ADMIN: Lấy danh sách user -------------------
-def get_all_users(db: Session):
-    users = db.query(Users).all()
-    return users
+def get_all_users(db: Session, page: int = 1, limit: int = 10, search: str = None):
+    # Chỉ lấy role user
+    query = db.query(Users).filter(Users.Role == 'user')
+
+    # Tìm kiếm
+    if search:
+        search_pattern = f"%{search}%"
+        query = query.filter(
+            or_(
+                Users.FullName.like(search_pattern),
+                Users.Email.like(search_pattern),
+                Users.PhoneNumber.like(search_pattern)
+            )
+        )
+    
+    # Sắp xếp mới nhất trước
+    query = query.order_by(desc(Users.CreatedAt))
+
+    # Phân trang
+    total = query.count()
+    skip = (page - 1) * limit
+    users = query.offset(skip).limit(limit).all()
+
+    # 👇 QUAN TRỌNG: Trả về đúng format này
+    return {
+        "data": users,
+        "total": total,
+        "page": page,
+        "limit": limit
+    }
 
 # ------------------- ADMIN: Xem chi tiết user -------------------
 def get_user_by_id(db: Session, user_id: int):

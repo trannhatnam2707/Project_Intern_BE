@@ -58,9 +58,14 @@ def refresh_token(refresh_token: str):
 
 # Lấy tất cả user (cần admin)
 @router.get("/users")
-def get_users(db: Session = Depends(get_db), current_user: Users = Depends(require_admin)):
-    return get_all_users(db)
-
+def get_users(
+    page: int = 1, 
+    limit: int = 10, 
+    search: str = None, 
+    db: Session = Depends(get_db), 
+    current_user: Users = Depends(require_admin)
+):
+    return get_all_users(db, page, limit, search)
 # Lấy chi tiết user
 @router.get("/users/{user_id}")
 def get_user_detail(user_id: int, db: Session = Depends(get_db), current_user: Users = Depends(require_admin)):

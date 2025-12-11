@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from Controllers.Products_Controller import create_product, delete_product, get_all_products, get_product_by_id, update_product
+from Controllers.Products_Controller import create_product, delete_product, get_all_products, get_product_by_id, update_product,generate_marketing_content_by_ai
 from Database.Connection import get_db
 from typing import Optional
 from Models.Users_Model import Users
-from Schemas.Products_Schemas import ProductCreate, ProductOut,ProductListResponse
+from Schemas.Products_Schemas import ProductCreate, ProductOut,ProductListResponse,GenerateContentRequest
 from Utils.Dependencies import require_admin
 
 router = APIRouter(
@@ -57,3 +57,10 @@ def delete_existing_product(
     current_user: Users = Depends(require_admin)
 ):
     return delete_product(db, product_id)
+
+
+# API Sinh nội dung Marketing (Thêm vào router)
+@router.post("/generate-marketing-content")
+def generate_marketing(payload: GenerateContentRequest, db: Session = Depends(get_db)):
+    content = generate_marketing_content_by_ai(payload.ProductName, payload.Description)
+    return {"content": content}

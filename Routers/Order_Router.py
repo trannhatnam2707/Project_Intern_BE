@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from typing import List 
+from typing import List , Optional
 from Database.Connection import get_db
 from Schemas.Order_Schemas import OrderCreate, OrderOut 
 from Controllers.Order_Controller import (
@@ -9,7 +9,8 @@ from Controllers.Order_Controller import (
     get_all_orders,
     get_order_detail,
     update_order_status,
-    delete_order
+    delete_order,
+    cancel_order_by_user
 )
 from Utils.Dependencies import get_current_user, require_admin
 
@@ -34,10 +35,24 @@ def get_user_orders(
 ):
     return get_my_orders(db, current_user.UserID)
 
+@router.put("/{order_id}/cancel")
+def user_cancel_order(
+    order_id: int, 
+    db: Session = Depends(get_db), 
+    current_user = Depends(get_current_user)
+):
+    return cancel_order_by_user(db, order_id, current_user.UserID)
+
 # Admin: Xem tất cả đơn hàng
-@router.get("/", dependencies=[Depends(require_admin)], response_model=List[OrderOut])
-def get_all_orders_admin(db: Session = Depends(get_db)):
-    return get_all_orders(db)
+@router.get("/", dependencies=[Depends(require_admin)])
+def get_all_orders_admin(
+    page: int = 1, 
+    limit: int = 10, 
+    search: Optional[str] = None, 
+    status: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    return get_all_orders(db, page, limit, search, status)
 
 # Admin: Xem chi tiết đơn hàng
 @router.get("/{order_id}", dependencies=[Depends(require_admin)], response_model=OrderOut)

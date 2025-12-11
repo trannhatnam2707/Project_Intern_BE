@@ -35,3 +35,7 @@ class ProductListResponse(BaseModel):
     total: int
     page: int
     limit: int
+
+class GenerateContentRequest(BaseModel):
+    ProductName: str
+    Description: Optional[str] = None
