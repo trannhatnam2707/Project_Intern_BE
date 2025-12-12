@@ -86,7 +86,7 @@ def create_product(db: Session, product_data: ProductCreate):
     return new_product
 
 # Get all products
-def get_all_products(db: Session, category_id: int = None, sort_by: str = None, page: int = 1, limit: int = 12, search: str = None):
+def get_all_products(db: Session, category_id: int = None, sort_by: str = None, page: int = 1, limit: int = 6, search: str = None):
     # Join bảng Category để tìm kiếm theo tên danh mục
     query = db.query(Product).join(Category, Product.CategoryID == Category.CategoryID)
     
