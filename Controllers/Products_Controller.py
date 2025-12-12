@@ -5,6 +5,8 @@ from Models.Products_Model import Product
 from Models.Categories_Model import Category # Import thêm Category
 from Schemas.Products_Schemas import ProductCreate
 import google.generativeai as genai
+from Schemas.Pinecone_Schemas import ProductSyncData
+from Service.Pinecone_Service import sync_product_to_pinecone
 import os
 from dotenv import load_dotenv
 
@@ -66,6 +68,21 @@ def create_product(db: Session, product_data: ProductCreate):
     db.add(new_product)
     db.commit()
     db.refresh(new_product)
+
+    # 👇 ĐỒNG BỘ PINECONE
+    try:
+        sync_data = ProductSyncData(
+            ProductID=new_product.ProductID,
+            ProductName=new_product.ProductName,
+            Description=new_product.Description,
+            Price=new_product.Price,
+            Stock=new_product.Stock,
+            ImageURL=new_product.ImageURL
+        )
+        sync_product_to_pinecone(action="UPSERT", product_id=new_product.ProductID, data=sync_data)
+    except Exception as e:
+        print(f"Lỗi Sync Pinecone: {e}")
+
     return new_product
 
 # Get all products
@@ -130,6 +147,21 @@ def update_product(db: Session, product_id: int, data: ProductCreate):
             setattr(product, key, value)
     db.commit()
     db.refresh(product) 
+
+     # 👇 ĐỒNG BỘ PINECONE
+    try:
+        sync_data = ProductSyncData(
+            ProductID=product.ProductID,
+            ProductName=product.ProductName,
+            Description=product.Description,
+            Price=product.Price,
+            Stock=product.Stock,
+            ImageURL=product.ImageURL
+        )
+        sync_product_to_pinecone(action="UPSERT", product_id=product.ProductID, data=sync_data)
+    except Exception as e:
+        print(f"Lỗi Sync Pinecone: {e}")
+
     return product
 
 # Delete product
@@ -140,4 +172,10 @@ def delete_product(db: Session, product_id: int):
     
     db.delete(product)
     db.commit()
-    return {"message": "Xóa sản phẩm thành công"}
+    # 👇 ĐỒNG BỘ PINECONE (XÓA)
+    try:
+        sync_product_to_pinecone(action="DELETE", product_id=product_id)
+    except Exception as e:
+        print(f"Lỗi Sync Pinecone: {e}")
+        
+    return {"message": "Xóa thành công"}

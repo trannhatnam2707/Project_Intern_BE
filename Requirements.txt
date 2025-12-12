@@ -8,3 +8,5 @@ fastapi-mail==0.5.0
 email-validator==2.2.0
 stripe
 google-generativeai
+pinecone-client
+pinecone

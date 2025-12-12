@@ -12,8 +12,9 @@ from Models.OrderDetail_Model import OrderDetail
 from Models.Payment_Model import Payment
 
 
+
 # Import routers SAU khi đã import models
-from Routers import  User_Router, Products_Router, Order_Router, Category_Router, Reviews_Router, Payment_Router,Dashboard_Router
+from Routers import  User_Router, Products_Router, Order_Router, Category_Router, Reviews_Router, Payment_Router,Dashboard_Router,Pinecone_Router, Chat_Router
 
 app = FastAPI(title="User Management API", version="1.0.0")
 
@@ -26,3 +27,5 @@ app.include_router(Category_Router.router)
 app.include_router(Reviews_Router.router)
 app.include_router(Payment_Router.router) 
 app.include_router(Dashboard_Router.router)
+app.include_router(Pinecone_Router.router)
+app.include_router(Chat_Router.router)
