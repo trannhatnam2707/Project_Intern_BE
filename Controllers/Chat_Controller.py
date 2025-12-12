@@ -2,48 +2,71 @@ from sqlalchemy.orm import Session
 import google.generativeai as genai
 import os
 from dotenv import load_dotenv
-# Import hàm tìm kiếm từ Service Pinecone chúng ta đã viết
 from Service.Pinecone_Service import search_pinecone
 
-# Load cấu hình
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
-def chat_with_ai(db: Session, user_message: str):
-    # 1. Kiểm tra Key
+def chat_with_ai(db: Session, user_message: str, history: list):
     if not GEMINI_API_KEY:
-        return "Hệ thống AI đang bảo trì (Thiếu API Key)."
+        return "Hệ thống AI đang bảo trì."
 
-    # 2. RETRIEVAL: Tìm kiếm thông tin liên quan từ Pinecone
-    # Hàm này trả về list các metadata của các chunk khớp nhất (độ tương đồng > 0.6)
-    relevant_contexts = search_pinecone(user_message, top_k=5)
+    # --- 1. XỬ LÝ NGỮ CẢNH TÌM KIẾM (Search Context) ---
+    # Nếu câu hỏi quá ngắn (ví dụ: "giá sao?", "có màu gì?", "trả góp ko"), 
+    # ta cần ghép với câu hỏi trước đó của User để Pinecone tìm đúng sản phẩm.
+    
+    search_query = user_message
+    
+    # Tìm tin nhắn gần nhất của user trong lịch sử
+    last_user_msg = ""
+    if history:
+        # Lấy tin nhắn cuối cùng mà sender là 'user'
+        for msg in reversed(history):
+            if msg.get('sender') == 'user':
+                last_user_msg = msg.get('text', '')
+                break
+    
+    # Nếu có tin nhắn trước đó, thử ghép ngữ cảnh để search tốt hơn
+    if last_user_msg:
+        # Kỹ thuật đơn giản: "iPhone 15 Pro Max" + " " + "Có trả góp không?"
+        # Giúp Pinecone tìm thấy vector chứa cả thông tin sản phẩm và chính sách trả góp
+        search_query = f"{last_user_msg} {user_message}"
 
-    # 3. AUGMENTED: Xây dựng ngữ cảnh (Context) để "mớm" cho AI
+    print(f"🔍 Search Query thực tế: {search_query}") # Debug để xem server tìm gì
+
+    # --- 2. RETRIEVAL (Tìm kiếm Pinecone với query đã ghép) ---
+    relevant_contexts = search_pinecone(search_query, top_k=5)
+
     context_text = ""
     if relevant_contexts:
-        context_text = " DỮ LIỆU TÌM THẤY TRONG KHO:\n"
+        context_text = "🔍 THÔNG TIN TÌM THẤY TỪ KHO:\n"
         for i, item in enumerate(relevant_contexts):
-            # Lấy thông tin từ metadata (đã lưu lúc Upsert)
             name = item.get('ProductName', 'Sản phẩm')
             price = float(item.get('Price', 0))
             stock = int(item.get('Stock', 0))
-            # Ưu tiên lấy text_chunk (nội dung cắt nhỏ), nếu không có thì lấy Description gốc
             desc = item.get('text_chunk', '') or item.get('Description', '')
-            
             status = "Còn hàng" if stock > 0 else "Hết hàng"
             
-            context_text += f"--- Sản phẩm {i+1}: {name} ---\n"
-            context_text += f"• Giá: {price:,.0f} VNĐ | Kho: {status}\n"
-            context_text += f"• Thông tin chi tiết: {desc}\n\n"
+            context_text += f"- {name} (Giá: {price:,.0f}đ, Kho: {status})\n"
+            context_text += f"  Chi tiết: {desc}\n\n"
     else:
-        context_text = " Hệ thống KHÔNG tìm thấy sản phẩm nào trong kho khớp với từ khóa trong câu hỏi."
+        context_text = "⚠️ Không tìm thấy thông tin sản phẩm cụ thể nào trong kho."
 
-    # 4. GENERATION: Tạo Prompt và gửi cho Gemini
+    # --- 3. FORMAT LỊCH SỬ CHAT (Chat History) ---
+    # Chuyển list history thành text để đưa vào Prompt
+    chat_history_text = ""
+    # Chỉ lấy 6 tin nhắn gần nhất để đỡ tốn token
+    recent_history = history[-6:] 
+    for msg in recent_history:
+        role = "Khách" if msg['sender'] == 'user' else "AI"
+        chat_history_text += f"{role}: {msg['text']}\n"
+
+    # --- 4. GENERATION (Prompt) ---
     prompt = f"""
-    Bạn là nhân viên tư vấn bán hàng chuyên nghiệp, nhiệt tình của cửa hàng công nghệ WeHappi Tech.
+     Bạn là nhân viên tư vấn bán hàng chuyên nghiệp, nhiệt tình của cửa hàng công nghệ WeHappi Tech.
     
      KHÁCH HỎI: "{user_message}"
     
@@ -62,11 +85,11 @@ def chat_with_ai(db: Session, user_message: str):
     4. Giọng văn: Thân thiện, vui vẻ, sử dụng emoji  để sinh động, không nên viết quá dài.
     """
 
+
     try:
-        # Gọi Gemini
         model = genai.GenerativeModel('gemini-2.5-flash')
         response = model.generate_content(prompt)
         return response.text.strip()
     except Exception as e:
-        print(f"Lỗi Gemini: {e}")
-        return "Xin lỗi, tôi đang bị chóng mặt chút xíu. Bạn hãy thử hỏi lại sau nhé!"
+        print(f"Gemini Error: {e}")
+        return "Xin lỗi, tôi đang mất kết nối một chút. Bạn hỏi lại nhé!"

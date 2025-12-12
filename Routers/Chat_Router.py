@@ -20,7 +20,7 @@ def chat_endpoint(request: ChatRequest, db: Session = Depends(get_db)):
     """
     try:
         # Gọi Controller để xử lý logic
-        response_text = chat_with_ai(db, request.message)
+        response_text = chat_with_ai(db, request.message, request.history)
         
         # Trả về format JSON khớp với Frontend (res.data.reply)
         return {"reply": response_text}
