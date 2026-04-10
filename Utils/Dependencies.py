@@ -6,7 +6,8 @@ from Service.JWT_Service import verify_access_token
 from Database.Connection import SessionLocal
 
 #------Dependency để lấy token cho user-------#
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+# tokenUrl phải khớp route login thực tế trong User_Router
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/users/auth/login")
 
 #------Dependency để lấy db-------#
 def get_db():

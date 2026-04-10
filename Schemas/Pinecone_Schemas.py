@@ -6,6 +6,7 @@ class ProductSyncData(BaseModel):
     ProductID: int
     ProductName: str
     Description: Optional[str] = ""
+    MarketingContent : Optional[str]
     Price: float
     Stock: int
     CategoryID: Optional[int] = None

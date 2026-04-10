@@ -11,6 +11,11 @@ genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME")
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+# Phải khớp dimension khi tạo index trên Pinecone (gemini-embedding-001 mặc định 3072)
+EMBEDDING_OUTPUT_DIM = int(os.getenv("EMBEDDING_OUTPUT_DIMENSIONALITY", "768"))
+# Ngưỡng similarity (cosine) — 0.6 thường quá cao, dễ trả về rỗng dù index có dữ liệu
+# MIN_MATCH_SCORE = float(os.getenv("PINECONE_MIN_MATCH_SCORE", "0.35"))
+# DEBUG_PINECONE = os.getenv("DEBUG_PINECONE", "").lower() in ("1", "true", "yes")
 
 if not PINECONE_API_KEY or not PINECONE_INDEX_NAME:
     print("⚠️ Cảnh báo: Chưa cấu hình Pinecone/Gemini trong .env")
@@ -62,9 +67,10 @@ def get_embedding(text):
         # Xóa dòng mới để tối ưu vector
         clean_text = text.replace("\n", " ")
         result = genai.embed_content(
-            model="text-embedding-004",
+            model="gemini-embedding-001",
             content=clean_text,
-            task_type="retrieval_document"
+            task_type="retrieval_document",
+            output_dimensionality=EMBEDDING_OUTPUT_DIM,
         )
         return result['embedding']
     except Exception as e:
@@ -142,9 +148,10 @@ def search_pinecone(query, top_k=5):
     try:
         # Embed câu hỏi
         query_res = genai.embed_content(
-            model="text-embedding-004",
+            model="gemini-embedding-001",
             content=query,
-            task_type="retrieval_query"
+            task_type="retrieval_query",
+            output_dimensionality=EMBEDDING_OUTPUT_DIM,
         )
         
         # Query Pinecone
@@ -153,7 +160,7 @@ def search_pinecone(query, top_k=5):
             top_k=top_k,
             include_metadata=True
         )
-        
+
         return [match['metadata'] for match in result['matches'] if match['score'] > 0.6]
     except Exception as e:
         print(f"❌ Lỗi tìm kiếm: {e}")

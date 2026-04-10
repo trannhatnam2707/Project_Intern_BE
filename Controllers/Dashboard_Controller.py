@@ -27,7 +27,7 @@ def get_dashboard_stats(db: Session, time_range: str = 'month'):
     # 3. QUERY DỮ LIỆU
     # Doanh thu hiện tại
     current_revenue = db.query(func.sum(Order.TotalAmount)).filter(
-        Order.Status.in_(REVENUE_STATUSES), # 👈 Chỉ tính đơn đã trả tiền
+        Order.Status.in_(REVENUE_STATUSES), #  Chỉ tính đơn đã trả tiền
         Order.OrderDate >= start_date
     ).scalar() or 0
 

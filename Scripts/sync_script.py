@@ -30,17 +30,17 @@ try:
     from Models.AdviceHistory_Model import AdviceHistory
 except ImportError:
     try:
-        from Models.Advice_Model import AdviceHistory
+        from Models.AdviceHistory_Model import AdviceHistory
     except ImportError:
         pass # Bỏ qua
 
-try:
-    from Models.Cart_Model import Cart
-except ImportError:
-    try:
-        from Models.Carts_Model import Cart
-    except ImportError:
-        pass # Bỏ qua
+# try:
+#     from Models.C import Cart
+# except ImportError:
+#     try:
+#         from Models.Carts_Model import Cart
+#     except ImportError:
+#         pass # Bỏ qua
 
 # ==============================================================================
 

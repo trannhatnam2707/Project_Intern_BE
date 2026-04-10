@@ -1,3 +1,4 @@
+from math import prod
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, or_ # Import thêm or_
@@ -137,30 +138,56 @@ def get_product_by_id(db: Session, product_id: int):
     return product
 
 # Update product
+from sqlalchemy import text
+
 def update_product(db: Session, product_id: int, data: ProductCreate):
     product = db.query(Product).filter(Product.ProductID == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Sản phẩm không tồn tại")
     
-    for key, value in data.dict(exclude_unset=True).items():
+    updates = data.dict(exclude_unset=True)
+
+    # 🔥 FIX CỨNG CHO MarketingContent
+    if "MarketingContent" in updates:
+        db.execute(
+            text("""
+                UPDATE Products 
+                SET MarketingContent = :mc 
+                WHERE ProductID = :id
+            """),
+            {
+                "mc": str(updates.pop("MarketingContent")),
+                "id": product_id
+            }
+        )
+
+    # 👇 update các field còn lại bằng ORM
+    for key, value in updates.items():
         if hasattr(product, key):
             setattr(product, key, value)
-    db.commit()
-    db.refresh(product) 
 
-     # 👇 ĐỒNG BỘ PINECONE
+    db.commit()
+    db.refresh(product)
+
     try:
         sync_data = ProductSyncData(
             ProductID=product.ProductID,
             ProductName=product.ProductName,
             Description=product.Description,
+            MarketingContent=product.MarketingContent,
             Price=product.Price,
             Stock=product.Stock,
+            CategoryID=product.CategoryID,
             ImageURL=product.ImageURL
         )
-        sync_product_to_pinecone(action="UPSERT", product_id=product.ProductID, data=sync_data)
+        sync_product_to_pinecone(
+            action = "UPSERT",
+            product_id=product.ProductID,
+            data = sync_data
+        )
     except Exception as e:
-        print(f"Lỗi Sync Pinecone: {e}")
+        print(f"Lỗi sync lên pinecon: {e}")
+
 
     return product
 
